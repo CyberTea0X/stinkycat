@@ -11,10 +11,12 @@ type World struct {
 	nextEntityID uint64
 }
 
+type UpdateFunc func(entities []uint64, components map[ComponentID]map[uint64]any)
+
 // System описание системы
 type System struct {
 	RequiredComponents []ComponentID
-	UpdateFunc         func([]uint64, map[ComponentID]map[uint64]any)
+	UpdateFunc         UpdateFunc
 }
 
 // NewWorld создает новый мир

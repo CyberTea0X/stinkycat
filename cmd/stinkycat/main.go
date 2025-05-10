@@ -1,48 +1,65 @@
 package main
 
 import (
-	"log"
-
-	"github.com/CyberTea0X/stinkycat/internal"
+	anim "github.com/CyberTea0X/stinkycat/internal/animation"
+	c "github.com/CyberTea0X/stinkycat/internal/components"
+	sys "github.com/CyberTea0X/stinkycat/internal/systems"
 	"github.com/CyberTea0X/stinkycat/pkg/ecs"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 func main() {
-	// Инициализация окна
+	// Инициализация окна и текстуры
 	rl.InitWindow(800, 600, "Platformer Roguelike")
 	rl.SetTargetFPS(60)
-	log.Println("here")
-	// Загрузка текстуры кота
 	catTexture := rl.LoadTexture("assets/catsheet.png")
 
-	// Создание мира ECS
-	world := ecs.NewWorld()
+	// Создание регистра анимаций
+	animLib := anim.NewAnimationLibrary()
+	frameWidth, frameHeight := 32, 32
+
+	// Добавление анимаций
+	animLib.AddAnimation("idle", anim.GenerateAnimationFrames(catTexture, 0, 8, frameWidth, frameHeight))  // Строка 0, 6 кадров
+	animLib.AddAnimation("walk", anim.GenerateAnimationFrames(catTexture, 4, 8, frameWidth, frameHeight))  // Строка 1, 6 кадров
+	animLib.AddAnimation("jump", anim.GenerateAnimationFrames(catTexture, 18, 8, frameWidth, frameHeight)) // Строка 2, 4 кадра
+	// Добавьте другие анимации при необходимости
+
+	// Создание ECS мира
+	w := ecs.NewWorld()
+	w.AddSystem(sys.NewRenderSystem())
+	w.AddSystem(sys.NewAnimationSystem())
+	w.AddSystem(sys.NewInputSystem(animLib))
 
 	// Создание сущности кота
-	catEntity := world.NewEntity()
-
-	// Добавление компонента Transform
-	world.AddComponent(catEntity, internal.TransformComponentID, &internal.Transform{
-		X: 100, Y: 100,
-		Width: 64, Height: 64,
+	catEntity := w.NewEntity()
+	w.AddComponent(catEntity, c.TransformComponentID, &c.Transform{
+		X: 100, Y: 100, Width: 256, Height: 256,
 	})
 
-	// Добавление компонента Sprite (первый кадр текстуры)
-	world.AddComponent(catEntity, internal.SpriteComponentID, &internal.Sprite{
+	// Установка начальной анимации
+	initialFrames, _ := animLib.GetAnimation("idle")
+	w.AddComponent(catEntity, c.SpriteComponentID, &c.Sprite{
 		Texture: catTexture,
-		Frame:   rl.Rectangle{X: 0, Y: 0, Width: 32, Height: 32},
+		Frame:   initialFrames[0],
 	})
-	world.AddSystem(internal.NewRenderSystem())
+
+	w.AddComponent(catEntity, c.AnimationComponentID, &c.Animation{
+		Frames:       initialFrames,
+		FrameTime:    0.1,
+		CurrentFrame: 0,
+		Timer:        0,
+	})
+
+	w.AddComponent(catEntity, c.InputBindingsComponentID, &c.InputBindings{
+		JumpKey:  rl.KeyW,
+		WalkKeys: []int32{rl.KeyA, rl.KeyD},
+	})
 
 	// Основной цикл игры
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.RayWhite)
-
-		// Обновление систем (рендеринг)
-		world.Update()
-
+		w.Update()
 		rl.EndDrawing()
 	}
 

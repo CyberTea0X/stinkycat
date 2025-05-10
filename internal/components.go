@@ -1,6 +1,9 @@
 package internal
 
-import "stinkycat/pkg/ecs"
+import (
+	"github.com/CyberTea0X/stinkycat/pkg/ecs"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 const (
 	TransformComponentID ecs.ComponentID = iota

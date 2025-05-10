@@ -33,6 +33,10 @@ func (w *World) NewEntity() uint64 {
 	return id
 }
 
+func (w *World) AddSystem(s *System) {
+	w.systems = append(w.systems, s)
+}
+
 // AddComponent добавляет компонент (без рефлексии)
 func (w *World) AddComponent(entityID uint64, componentID ComponentID, component any) {
 	if _, exists := w.components[componentID]; !exists {
